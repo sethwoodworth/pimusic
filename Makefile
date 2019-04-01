@@ -1,10 +1,11 @@
 .DEFAULT_GOAL := help
-USER=USERNAME_GOES_HERE
-PASSWORD=PASSWORD_GOES_HERE
+USER ?= USERNAME_GOES_HERE
+PASSWORD ?= PASSWORD_GOES_HERE
 
-install: install-apt alsa-config install-spotifyd config-spotifyd systemd-spotifyd enable-spotifyd
+install: install-apt alsa-config install-spotifyd config-spotifyd systemd-spotifyd enable-spotifyd  ## Install and configure spotifyd (first set USER and PASSWORD here
 
 install-apt: /usr/bin/unzip
+/usr/bin/unzip:
 	sudo apt install unzip
 
 alsa-config: /etc/asound.conf ## Configure alsa to use the usb audio device
@@ -19,14 +20,15 @@ install-spotifyd: /usr/local/bin/spotifyd
 
 config-spotifyd: /etc/spotifyd.conf  ## Install the spotifyd configuration SET USER and PASSWORD IN THIS FILE FIRST
 /etc/spotifyd.conf:
-	sed 's/USER/$(USER)/' ./config/spotifyd.conf
+	sed -i 's/USER/$(USER)/' ./config/spotifyd.conf
+	sed -i 's/PASSWORD/$(PASSWORD)/' ./config/spotifyd.conf
 	sudo cp ./config/spotifyd.conf /etc/spotifyd.conf
 
 systemd-spotifyd: /etc/systemd/user/spotifyd.service
 /etc/systemd/user/spotifyd.service:
 	sudo cp ./config/spotifyd.service /etc/systemd/user/spotifyd.service
 
-enable-spotifyd: systemd-spotifyd \/home/pi/.config/systemd/user/default.target.wants/spotifyd.service ## Enable the spotifyd service
+enable-spotifyd: systemd-spotifyd /home/pi/.config/systemd/user/default.target.wants/spotifyd.service ## Enable the spotifyd service
 /home/pi/.config/systemd/user/default.target.wants/spotifyd.service:
 	systemctl --user enable spotifyd.service
 	systemctl --user start spotifyd.service
